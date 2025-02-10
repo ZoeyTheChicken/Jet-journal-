@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plane Spotting Journal</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #fff;
+    }
+    .tab-content {
+      display: none;
+      padding: 20px;
+      animation: fadeIn 0.3s;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .bottom-bar {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: #1f1f1f;
+      padding: 10px 0;
+      border-top: 1px solid #333;
+    }
+    .bottom-bar i {
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #1f1f1f;
+      border-bottom: 1px solid #333;
+    }
+    .top-bar i {
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .add-entry, .add-note {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1f1f1f;
+      padding: 20px;
+      border: 1px solid #333;
+      border-radius: 10px;
+      z-index: 10;
+    }
+    .add-entry input, .add-note textarea, .add-entry textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #333;
+      border: none;
+      color: #fff;
+      border-radius: 5px;
+    }
+    .add-entry button, .add-note button {
+      padding: 10px 20px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .plane-entry {
+      background-color: #333;
+      color: #fff;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .plane-entry .entry-title {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .plane-entry .entry-detail {
+      font-size: 14px;
+      color: #bbb;
+    }
+    .plane-entry .entry-image {
+      max-width: 100%;
+      border-radius: 10px;
+    }
+    .plane-entry .star-icon {
+      font-size: 18px;
+      color: gold;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <i class="fas fa-trash" id="clear-data"></i>
+    <i class="fas fa-plus" id="add-entry"></i>
+  </div>
+
+  <div id="journal" class="tab-content active">
+    <h1>Journal</h1>
+    <div id="journal-entries"></div>
+  </div>
+
+  <div id="wishlist" class="tab-content">
+    <h1>Wishlist</h1>
+    <div id="wishlist-entries"></div>
+  </div>
+
+  <div id="notes" class="tab-content">
+    <h1>Notes</h1>
+    <div id="notes-entries"></div>
+  </div>
+
+  <div class="bottom-bar">
+    <i class="fas fa-book" data-tab="journal"></i>
+    <i class="fas fa-star" data-tab="wishlist"></i>
+    <i class="fas fa-sticky-note" data-tab="notes"></i>
+  </div>
+
+  <div class="add-entry">
+    <input type="text" id="plane-type" placeholder="Plane Type">
+    <input type="text" id="registration" placeholder="Registration">
+    <input type="text" id="flight-number" placeholder="Flight Number">
+    <input type="text" id="airport" placeholder="Airport">
+    <input type="text" id="origin-country" placeholder="Origin Country">
+    <textarea id="notes-entry" placeholder="Notes"></textarea>
+    <input type="file" id="plane-image" accept="image/*">
+    <button id="save-entry">Save</button>
+  </div>
+
+  <div class="add-note">
+    <textarea id="note-content" placeholder="Write a note..."></textarea>
+    <button id="save-note">Save Note</button>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.bottom-bar i');
+    const contents = document.querySelectorAll('.tab-content');
+    const addEntryModal = document.querySelector('.add-entry');
+    const addNoteModal = document.querySelector('.add-note');
+    const clearDataBtn = document.getElementById('clear-data');
+    const addEntryBtn = document.getElementById('add-entry');
+    const saveEntryBtn = document.getElementById('save-entry');
+    const saveNoteBtn = document.getElementById('save-note');
+
+    let journalData = JSON.parse(localStorage.getItem('journalData')) || [];
+    let wishlistData = JSON.parse(localStorage.getItem('wishlistData')) || [];
+    let notesData = JSON.parse(localStorage.getItem('notesData')) || [];
+
+    const renderEntries = () => {
+      document.getElementById('journal-entries').innerHTML = journalData.map(entry => `
+        <div class="plane-entry">
+          <div class="entry-title">${entry.type} - ${entry.registration}</div>
+          <div class="entry-detail">Flight: ${entry.flightNumber}</div>
+          <div class="entry-detail">Airport: ${entry.airport}</div>
+          <div class="entry-detail">Origin: ${entry.originCountry}</div>
+          <div class="entry-detail">Notes: ${entry.notes}</div>
+          ${entry.image ? `<img src="${entry.image}" class="entry-image" />` : ''}
+        </div>
+      `).join('');
+
+      document.getElementById('wishlist-entries').innerHTML = wishlistData.map(entry => `
+        <div class="plane-entry">
+          <div class="entry-title">${entry.type}</div>
+          <div class="entry-detail">Wishlist Entry</div>
+          <span class="star-icon"><i class="fas fa-star"></i></span>
+        </div>
+      `).join('');
+
+      document.getElementById('notes-entries').innerHTML = notesData.map(note => `
+        <div class="entry-detail">${note}</div>
+      `).join('');
+    };
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.getAttribute('data-tab');
+        contents.forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(target).classList.add('active');
+
+        // Update the title based on the active tab
+        document.title = `${target.charAt(0).toUpperCase() + target.slice(1)} | Plane Spotting Journal`;
+      });
+    });
+
+    addEntryBtn.addEventListener('click', () => {
+      addEntryModal.style.display = 'block';
+    });
+
+    saveEntryBtn.addEventListener('click', () => {
+      const type = document.getElementById('plane-type').value;
+      const registration = document.getElementById('registration').value;
+      const flightNumber = document.getElementById('flight-number').value;
+      const airport = document.getElementById('airport').value;
+      const originCountry = document.getElementById('origin-country').value;
+      const notes = document.getElementById('notes-entry').value;
+      const imageFile = document.getElementById('plane-image').files[0];
+
+      let image = '';
+      if (imageFile) {
+        const reader = new FileReader();
+        reader.onloadend = function () {
+          image = reader.result;
+          const newEntry = { type, registration, flightNumber, airport, originCountry, notes, image };
+          journalData.push(newEntry);
+          localStorage.setItem('journalData', JSON.stringify(journalData));
+          renderEntries();
+        };
+        reader.readAsDataURL(imageFile);
+      } else {
+        const newEntry = { type, registration, flightNumber, airport, originCountry, notes, image: '' };
+        journalData.push(newEntry);
+        localStorage.setItem('journalData', JSON.stringify(journalData));
+        renderEntries();
+      }
+
+      addEntryModal.style.display = 'none';
+    });
+
+    saveNoteBtn.addEventListener('click', () => {
+      const content = document.getElementById('note-content').value;
+      notesData.push(content);
+      localStorage.setItem('notesData', JSON.stringify(notesData));
+      renderEntries();
+      addNoteModal.style.display = 'none';
+    });
+
+    clearDataBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+        if (confirm('Really clear all data?')) {
+          if (confirm('Final confirmation: Clear all data?')) {
+            localStorage.clear();
+            journalData = [];
+            wishlistData = [];
+            notesData = [];
+            renderEntries();
+          }
+        }
+      }
+    });
+
+    renderEntries();
+  </script>
+</body>
+</html>
